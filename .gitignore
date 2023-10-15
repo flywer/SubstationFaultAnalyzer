@@ -25,3 +25,5 @@ dist-ssr
 
 # 项目排除路径
 /src/preload/index.d.ts
+
+SubstationFaultAnalyzer.iml
