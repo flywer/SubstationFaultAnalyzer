@@ -15,10 +15,19 @@ export const channels = reactive({
         findFaultDataByPage: 'faultData/findFaultDataByPage',
     },
     substation: {
-        findAll: 'substation/findAll'
+        findAll: 'substation/findAll',
+        findByIntervalId: 'substation/findByIntervalId',
+        findSubstationById: 'substation/findSubstationById',
     },
     proAct: {
-        findAll: 'proAct/findAll'
+        findAll: 'proAct/findAll',
+        findByIntervalId: 'proAct/findByIntervalId',
+    },
+    switchPos: {
+        findAll: 'switchPos/findAll'
+    },
+    interval: {
+        findByIntervalId: 'interval/findByIntervalId',
     }
 
 })

@@ -1,4 +1,6 @@
-import {Entity, PrimaryGeneratedColumn, Column} from "typeorm"
+import {Entity, PrimaryGeneratedColumn, Column, OneToMany} from "typeorm"
+import {SwitchPos} from "@main/entity/SwitchPos";
+import {Interval} from "@main/entity/Interval";
 
 
 /**
@@ -12,4 +14,7 @@ export class Substation {
 
     @Column()
     substationName: string
+
+    @OneToMany(() => Interval, interval => interval.substation)
+    interval: Interval[]
 }

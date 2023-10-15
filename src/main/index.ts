@@ -12,6 +12,8 @@ import {AppDataSource} from "@main/dataSource/app-data-source";
 import {FaultDataController} from "@main/controller/faultData.controller";
 import {SubstationController} from "@main/controller/substation.controller";
 import {ProActController} from "@main/controller/proAct.controller";
+import {SwitchPosController} from "@main/controller/switchPos.controller";
+import {IntervalController} from "@main/controller/interval.controller";
 
 process["env"].ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 
@@ -60,7 +62,9 @@ async function bootstrap() {
                     WindowController,
                     FaultDataController,
                     SubstationController,
-                    ProActController
+                    ProActController,
+                    SwitchPosController,
+                    IntervalController
                 ],
                 injects: [{
                     name: 'IS_DEV',

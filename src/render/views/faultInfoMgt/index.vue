@@ -1,14 +1,15 @@
 <template>
   <n-layout class="m-2">
-
     <n-layout has-sider style="height: calc(100vh - 50px);">
-      <n-layout-sider class=" bg-gray-50">
+      <n-layout-sider
+          :width="230"
+          class="bg-gray-50">
 
         <n-tree
             ref="tree"
             class="mt-2 pr-2"
             block-line
-            expand-on-click
+            :expand-on-click="false"
             :cancelable="false"
             selectable
             virtual-scroll
@@ -26,7 +27,6 @@
 
       </n-layout-sider>
       <n-layout-content>
-
         <n-scrollbar class=" bg-gray-100" style="height: calc(100vh - 50px);" trigger="hover">
           <div class="m-2 pr-2">
             <div class="w-auto h-8 mb-2">
@@ -88,19 +88,20 @@
                 :size="'small'"
                 :loading="isTableLoading"
                 :striped="true"
+                :pagination="paginationReactive"
             />
 
-            <n-space class="mt-4" justify="end">
-              <n-pagination
-                  v-model:page="paginationReactive.page"
-                  v-model:page-size="paginationReactive.pageSize"
-                  :item-count="paginationReactive.itemCount"
-                  :page-sizes="[10, 20, 30, 40]"
-                  show-size-picker
-                  @update:page="paginationReactive.onChange"
-                  @update:page-size="paginationReactive.onUpdatePageSize"
-              />
-            </n-space>
+            <!--            <n-space class="mt-4" justify="end">
+                          <n-pagination
+                              v-model:page="paginationReactive.page"
+                              v-model:page-size="paginationReactive.pageSize"
+                              :item-count="paginationReactive.itemCount"
+                              :page-sizes="[10, 20, 30, 40]"
+                              show-size-picker
+                              @update:page="paginationReactive.onChange"
+                              @update:page-size="paginationReactive.onUpdatePageSize"
+                          />
+                        </n-space>-->
           </div>
         </n-scrollbar>
 
@@ -113,15 +114,16 @@
 
 
 <script setup lang="ts">
-import {h, onMounted, reactive, ref, watch} from "vue";
-import {DataTableColumns, FormInst, NButton, NIcon, NSpace, TreeInst, SelectGroupOption, TreeOption} from "naive-ui";
+import {h, onMounted, reactive, ref,} from "vue";
+import {DataTableColumns, NButton, NIcon, NSpace, TreeInst, TreeOption} from "naive-ui";
 import {Refresh, Search} from "@vicons/ionicons5";
 import {ArrowDownload20Regular, ArrowUpload20Regular, Add24Regular} from '@vicons/fluent'
 import {import_by_excel} from "@render/api/faultData";
-import {Filter, FilterOff, Focus2} from '@vicons/tabler'
-import {find_all_substation} from "@render/api/substation";
+import {find_all_substation, find_substation_by_id, find_substation_by_interval_id} from "@render/api/substation";
 import {find_all_proAct} from "@render/api/proAct";
 import {FaultDataTableRow} from "@common/types/faultData.types";
+import {find_all_switchPos} from "@render/api/switchPos";
+import {find_by_interval_id} from "@render/api/interval";
 
 onMounted(() => {
   treeNodesInit()
@@ -136,8 +138,8 @@ const treePattern = ref('')
 const filterNode = ref(false)
 
 const treeNodes = ref([])
-const expandedKeys = ref([])
-const selectedKeys = ref([])
+const expandedKeys = ref(['root'])
+const selectedKeys = ref(['root'])
 
 
 const treeNodesInit = () => {
@@ -179,6 +181,24 @@ const handleLoad = (node: TreeOption) => {
           type: "error"
         })
       }
+    } else if (node.key.toString().startsWith('substation-')) {
+
+      const result = await find_substation_by_id(node.key.toString().split('-')[1])
+
+      if (result.success) {
+        node.children = result.data.interval.map((v) => ({
+          label: v.intervalName,
+          key: `interval-${v.id}`,
+          isLeaf: true
+        }))
+
+      } else {
+        window.$notification.create({
+          title: "数据获取失败",
+          content: result.message,
+          type: "error"
+        })
+      }
     } else {
       node.children = []
     }
@@ -208,20 +228,27 @@ const handleSearch = (v: string) => {
 const createColumns = (): DataTableColumns<FaultDataTableRow> => {
   return [
     {
-      title: '数源单位名称',
-      key: 'departName',
+      title: '变电站名称',
+      key: 'substationName',
     },
     {
-      title: '表类型',
-      key: 'tableType',
+      title: '间隔名称',
+      key: 'intervalName',
     },
     {
-      title: '编目名称',
-      key: 'tableComment',
+      title: '信息描述',
+      key: 'faultName',
     },
     {
-      title: '前置机表名',
-      key: 'tableName',
+      title: '信息分类',
+      key: 'faultType',
+      render(row) {
+        if (row.faultType == 1)
+          return '保护动作信息'
+        else {
+          return '开关变位信息'
+        }
+      }
     },
     {
       title: '操作',
@@ -238,46 +265,142 @@ const createColumns = (): DataTableColumns<FaultDataTableRow> => {
 const columnsRef = ref(createColumns())
 const paginationReactive = reactive({
   page: 1,
-  pageSize: 10,
-  itemCount: 0,
-  onChange: (page: number) => {
+  pageSize: 15,
+  showSizePicker: true,
+  pageSizes: [15, 30, 60],
+  onChange: async (page: number) => {
     paginationReactive.page = page
-    tableDataInit(queryParam.value)
   },
   onUpdatePageSize: (pageSize: number) => {
     paginationReactive.pageSize = pageSize
     paginationReactive.page = 1
-    tableDataInit(queryParam.value)
   }
 })
 
 
 const tableDataInit = async (v?: string) => {
-  const selectedKey = selectedKeys.value[0]
+  const selectedKey = selectedKeys.value[0] as string
   tableDataRef.value = []
 
   if (selectedKey === 'root') {
-    const result = await find_all_proAct()
+    const substations = (await find_all_substation()).data
 
-    if (result.success) {
+    const proActResult = await find_all_proAct()
+    if (proActResult.success) {
 
-      console.log(result.data)
+      const data = proActResult.data.map((proAct): FaultDataTableRow => ({
+        substationId: substations.find(substation => substation.interval.some(interval => interval.id == proAct.interval.id)).id,
+        substationName: substations.find(substation => substation.interval.some(interval => interval.id == proAct.interval.id)).substationName,
+        intervalId: proAct.interval.id,
+        intervalName: proAct.interval.intervalName,
+        faultId: proAct.id,
+        faultName: proAct.proActName,
+        faultType: 1
+      }))
 
-      /* tableDataRef.value = result.data.map(proAct => ({
-
-
-
-       }))*/
+      tableDataRef.value.push(...data)
 
     } else {
       window.$notification.create({
         title: "数据获取失败",
-        content: result.message,
+        content: proActResult.message,
+        type: "error"
+      })
+    }
+
+    const switchPosResult = await find_all_switchPos()
+    if (switchPosResult.success) {
+
+      const data = switchPosResult.data.map((switchPos): FaultDataTableRow => ({
+        substationId: substations.find(substation => substation.interval.some(interval => interval.id == switchPos.interval.id)).id,
+        substationName: substations.find(substation => substation.interval.some(interval => interval.id == switchPos.interval.id)).substationName,
+        intervalId: switchPos.interval.id,
+        intervalName: switchPos.interval.intervalName,
+        faultId: switchPos.id,
+        faultName: switchPos.switchPosName,
+        faultType: 2
+      }))
+
+      tableDataRef.value.push(...data)
+
+    } else {
+      window.$notification.create({
+        title: "数据获取失败",
+        content: proActResult.message,
+        type: "error"
+      })
+    }
+
+  } else if (selectedKey.startsWith('substation-')) {
+    const result = await find_substation_by_id(selectedKey.split('-')[1])
+
+    for (const interval of result.data.interval) {
+      const res = await find_by_interval_id(interval.id)
+
+      res.data.proAct.forEach(proAct => {
+        tableDataRef.value.push({
+          substationId: result.data.id,
+          substationName: result.data.substationName,
+          intervalId: interval.id,
+          intervalName: interval.intervalName,
+          faultId: proAct.id,
+          faultName: proAct.proActName,
+          faultType: 1
+        })
+      })
+
+      res.data.switchPos.forEach(switchPos => {
+        tableDataRef.value.push({
+          substationId: result.data.id,
+          substationName: result.data.substationName,
+          intervalId: interval.id,
+          intervalName: interval.intervalName,
+          faultId: switchPos.id,
+          faultName: switchPos.switchPosName,
+          faultType: 2
+        })
+      })
+
+    }
+  } else if (selectedKey.startsWith('interval-')) {
+    const intervalResult = await find_by_interval_id(parseInt(selectedKey.split('-')[1]))
+    if (intervalResult.success) {
+      const substation = (await find_substation_by_id(intervalResult.data.substation.id)).data
+
+      intervalResult.data.proAct.forEach(proAct => {
+        tableDataRef.value.push({
+          substationId: substation.id,
+          substationName: substation.substationName,
+          intervalId: intervalResult.data.id,
+          intervalName: intervalResult.data.intervalName,
+          faultId: proAct.id,
+          faultName: proAct.proActName,
+          faultType: 1
+        })
+      })
+
+      intervalResult.data.switchPos.forEach(switchPos => {
+        tableDataRef.value.push({
+          substationId: substation.id,
+          substationName: substation.substationName,
+          intervalId: intervalResult.data.id,
+          intervalName: intervalResult.data.intervalName,
+          faultId: switchPos.id,
+          faultName: switchPos.switchPosName,
+          faultType: 2
+        })
+      })
+
+    } else {
+      window.$notification.create({
+        title: "数据获取失败",
+        content: intervalResult.message,
         type: "error"
       })
     }
 
   }
+
 
 }
 

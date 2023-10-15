@@ -1,8 +1,5 @@
 import {RouteRecordRaw} from 'vue-router'
 
-const view1 = () => import('@render/views/examples/view1.vue')
-const view2 = () => import ('@render/views/examples/view2.vue')
-
 const App = () => import ('@render/App.vue')
 const Main = () => import ('@render/pages/main.vue')
 const faultInfoMgt = () => import('@render/views/faultInfoMgt/index.vue')
