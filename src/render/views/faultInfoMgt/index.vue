@@ -119,7 +119,7 @@ import {DataTableColumns, NButton, NIcon, NSpace, TreeInst, TreeOption} from "na
 import {Refresh, Search} from "@vicons/ionicons5";
 import {ArrowDownload20Regular, ArrowUpload20Regular, Add24Regular} from '@vicons/fluent'
 import {import_by_excel} from "@render/api/faultData";
-import {find_all_substation, find_substation_by_id, find_substation_by_interval_id} from "@render/api/substation";
+import {find_all_substation, find_substation_by_id} from "@render/api/substation";
 import {find_all_proAct} from "@render/api/proAct";
 import {FaultDataTableRow} from "@common/types/faultData.types";
 import {find_all_switchPos} from "@render/api/switchPos";

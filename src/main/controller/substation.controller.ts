@@ -5,7 +5,6 @@ import {Substation} from "@main/entity/Substation";
 import {failure, Result, success} from "@main/vo/resultVo";
 import log from "electron-log";
 import {Interval} from "@main/entity/Interval";
-import {find_substation_by_id} from "@render/api/substation";
 
 @Controller()
 export class SubstationController {

@@ -1,5 +1,4 @@
 import {Entity, PrimaryGeneratedColumn, Column, OneToMany} from "typeorm"
-import {SwitchPos} from "@main/entity/SwitchPos";
 import {Interval} from "@main/entity/Interval";
 
 

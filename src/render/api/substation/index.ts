@@ -1,4 +1,3 @@
-import {PageVo} from "@common/types/page.types";
 import {Result} from "@main/vo/resultVo";
 import {ipcInstance} from "@render/plugins";
 import {channels} from "@render/api/channels";
