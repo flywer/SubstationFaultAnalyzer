@@ -13,6 +13,7 @@ export const channels = reactive({
     faultData: {
         importByExcel: 'faultData/importByExcel',
         findFaultDataByPage: 'faultData/findFaultDataByPage',
+        downloadTemplate: 'faultData/downloadTemplate',
     },
     substation: {
         findAll: 'substation/findAll',
@@ -21,13 +22,15 @@ export const channels = reactive({
     },
     proAct: {
         findAll: 'proAct/findAll',
-        findByIntervalId: 'proAct/findByIntervalId',
+        findProActByName: 'proAct/findProActByName',
     },
     switchPos: {
-        findAll: 'switchPos/findAll'
+        findAll: 'switchPos/findAll',
+        findSwitchPosByName: 'switchPos/findSwitchPosByName',
     },
     interval: {
         findByIntervalId: 'interval/findByIntervalId',
+        findAllInterval: 'interval/findAllInterval',
     }
 
 })

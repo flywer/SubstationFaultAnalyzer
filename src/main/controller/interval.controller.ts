@@ -30,5 +30,19 @@ export class IntervalController {
         });
     }
 
+    @IpcHandle(channels.interval.findAllInterval)
+    public async handleFindAllInterval() {
+        return new Promise<Result<Interval[]>>((resolve) => {
+            AppDataSource.getRepository(Interval).find({relations: ["substation", "proAct", "switchPos"]}).then(res => {
+                const result = success()
+                result.data = res
+                resolve(result)
+            }).catch(error => {
+                log.error(error)
+                resolve(failure(`间隔数据获取失败:${error}`))
+            })
+        });
+    }
+
 
 }

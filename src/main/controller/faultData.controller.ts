@@ -10,6 +10,11 @@ import {Interval} from "@main/entity/Interval";
 import {ProAct} from "@main/entity/ProAct";
 import {SwitchPos} from "@main/entity/SwitchPos";
 import {PageVo} from "@common/types/page.types";
+import {join} from "path";
+import fs from "fs";
+import {APP_RESOURCE_PATH} from "../../constants/app";
+import {readFsSync} from "@common/utils/fsUtils";
+import {isEmpty} from "lodash";
 
 type PageVoAlias = PageVo
 
@@ -129,9 +134,31 @@ export class FaultDataController {
 
     @IpcHandle(channels.faultData.findFaultDataByPage)
     public async handleFindFaultDataByPage(pageParams: PageVoAlias) {
+    }
 
 
-
-
+    @IpcHandle(channels.faultData.downloadTemplate)
+    public handleDownloadTemplate() {
+        return new Promise((resolve) => {
+            dialog.showSaveDialog({
+                title: '选择文件保存位置',
+                filters: [{
+                    name: 'xlsx',
+                    extensions: ['xlsx']
+                }],
+                defaultPath: '变电站故障数据导入模板'
+            }).then(res => {
+                if (!res.canceled) {
+                    const filePath = join(APP_RESOURCE_PATH, '/assets/excelTemplate/faultDataImportTemplate.xlsx')
+                    const buffer = readFsSync(filePath)
+                    if (buffer == null || isEmpty(buffer.toString())) {
+                        resolve(failure('模板不存在，请联系开发者'))
+                    } else {
+                        fs.writeFileSync(res.filePath, buffer);
+                        resolve(success('下载成功'))
+                    }
+                }
+            })
+        })
     }
 }

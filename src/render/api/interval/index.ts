@@ -7,3 +7,8 @@ export const find_by_interval_id = async (intervalId: number): Promise<Result<In
     const {data} = await ipcInstance.send(channels.interval.findByIntervalId, intervalId)
     return data
 }
+
+export const find_all_interval = async (): Promise<Result<Interval[]>> => {
+    const {data} = await ipcInstance.send(channels.interval.findAllInterval)
+    return data
+}

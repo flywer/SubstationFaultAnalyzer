@@ -7,8 +7,10 @@ const isDev = !app.isPackaged
 
 export const createMainWindow = (): BrowserWindow => {
     const win = new BrowserWindow({
-        width: 1208,
+        width: 1300,
+        minWidth:625,
         height: 781,
+        minHeight:360,
         frame: false, // 无边框
         webPreferences: {
             nodeIntegration: true,
