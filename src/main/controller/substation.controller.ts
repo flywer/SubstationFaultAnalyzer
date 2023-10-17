@@ -5,6 +5,7 @@ import {Substation} from "@main/entity/Substation";
 import {failure, Result, success} from "@main/vo/resultVo";
 import log from "electron-log";
 import {Interval} from "@main/entity/Interval";
+import {Like} from "typeorm";
 
 @Controller()
 export class SubstationController {
@@ -71,5 +72,22 @@ export class SubstationController {
         });
     }
 
+    @IpcHandle(channels.substation.findBySubstationName)
+    public async handleFindBySubstationName(name: string) {
+        return new Promise<Result<Substation>>((resolve) => {
+            AppDataSource.getRepository(Substation).findOne({
+                relations: ['interval'], where: {
+                    substationName: Like(`%${name || ''}%`)
+                }
+            }).then(res => {
+                const result = success()
+                result.data = res
+                resolve(result)
+            }).catch(error => {
+                log.error(error)
+                resolve(failure(`变电站数据获取失败:${error}`))
+            })
+        });
+    }
 
 }

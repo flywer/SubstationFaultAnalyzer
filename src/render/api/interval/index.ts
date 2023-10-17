@@ -12,3 +12,8 @@ export const find_all_interval = async (): Promise<Result<Interval[]>> => {
     const {data} = await ipcInstance.send(channels.interval.findAllInterval)
     return data
 }
+
+export const find_by_interval_name = async(name:string) => {
+    const {data} = await ipcInstance.send(channels.interval.findByIntervalName)
+    return data
+}

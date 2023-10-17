@@ -113,6 +113,17 @@
         <n-scrollbar class=" bg-gray-100" style="height: calc(100vh - 50px);" trigger="hover">
           <div class="m-2 pr-2">
             <div class="w-auto h-8 mb-2">
+              <n-space inline class="float-left">
+                <n-button secondary type="primary" @click="exportModalInit">
+                  导出
+                  <template #icon>
+                    <n-icon>
+                      <ArrowExportUp20Regular/>
+                    </n-icon>
+                  </template>
+                </n-button>
+              </n-space>
+
               <n-space inline class="float-right">
                 <n-input-group>
                   <n-input
@@ -142,8 +153,8 @@
                     </n-icon>
                   </template>
                 </n-button>
-                <n-button secondary type="info" @click="importByExcel">
-                  导入
+                <n-button secondary type="info" @click="importByExcel" :loading="isImporting">
+                  {{ isImporting ? '正在导入' : '导入' }}
                   <template #icon>
                     <n-icon>
                       <ArrowUpload20Regular/>
@@ -200,7 +211,6 @@
       :size="'small'"
       style="width: 340px"
   >
-
     <n-scrollbar class="pr-2" style="max-height: 500px;" trigger="hover">
       <n-form
           class="mt-4"
@@ -210,8 +220,8 @@
           :size="'small'"
       >
         <n-grid :cols="10" :x-gap="4">
-          <n-form-item-gi :span="10" label="变电站名称" path="substationId">
-            <n-select v-model:value="editModalModelRef.substationId"
+          <n-form-item-gi :span="10" label="变电站名称" path="substationName">
+            <n-select v-model:value="editModalModelRef.substationName"
                       filterable tag :options="substationNameOptions"
                       :consistent-menu-width="false"
                       placeholder="请输入"
@@ -219,8 +229,8 @@
                       :disabled="isEdit"
             />
           </n-form-item-gi>
-          <n-form-item-gi :span="10" label="间隔名称" path="intervalId">
-            <n-select v-model:value="editModalModelRef.intervalId"
+          <n-form-item-gi :span="10" label="间隔名称" path="intervalName">
+            <n-select v-model:value="editModalModelRef.intervalName"
                       filterable tag :options="intervalNameOptions"
                       :consistent-menu-width="false"
                       placeholder="请输入"
@@ -260,6 +270,123 @@
     </template>
   </n-modal>
 
+  <n-modal
+      v-model:show="showExportModalRef"
+      :mask-closable="false"
+      :closable="true"
+      preset="dialog"
+      role="dialog"
+      :show-icon="false"
+      title="文本导出"
+      :size="'small'"
+      style="width: 760px"
+  >
+    <n-scrollbar class="pr-2" style="max-height: 500px;" trigger="hover">
+      <n-card>
+        <n-form
+            label-placement="top"
+            :model="exportModalFormModel"
+            :size="'small'"
+        >
+          <n-grid :cols="12" :x-gap="4">
+
+            <n-form-item-gi :span="12" label="变电站" path="substation">
+              <n-select
+                  v-model:value="exportModalFormModel.substation"
+                  placeholder="请选择变电站"
+                  :options="exportModalSubstationOptions"
+                  filterable
+                  multiple
+                  :consistent-menu-width="false"
+                  @update:value="handleExportSubstationUpdate"
+              />
+            </n-form-item-gi>
+
+            <n-form-item-gi :span="12" label="间隔" path="interval">
+              <n-select
+                  v-model:value="exportModalFormModel.interval"
+                  :placeholder="isEmpty(exportModalFormModel.substation)?'请先选择变电站':'请选择间隔'"
+                  :options="exportModalIntervalOptions"
+                  filterable
+                  multiple
+                  :consistent-menu-width="false"
+                  :disabled="isEmpty(exportModalFormModel.substation)"
+                  @update:value="handleExportIntervalUpdate"
+              />
+            </n-form-item-gi>
+
+            <n-form-item-gi :span="12" label="保护动作信息" path="proAct">
+              <n-select
+                  v-model:value="exportModalFormModel.proAct"
+                  :placeholder="isEmpty(exportModalFormModel.interval)?'请先选择间隔':'请选择保护动作信息'"
+                  :options="exportModalProActOptions"
+                  filterable
+                  :consistent-menu-width="false"
+                  :disabled="isEmpty(exportModalFormModel.interval)"
+              />
+            </n-form-item-gi>
+
+            <n-form-item-gi :span="12" label="开关变位信息" path="switchPos">
+              <n-select
+                  v-model:value="exportModalFormModel.switchPos"
+                  :placeholder="isEmpty(exportModalFormModel.interval)?'请先选择间隔':'请选择开关变位信息'"
+                  :options="exportModalSwitchPosOptions"
+                  filterable
+                  :consistent-menu-width="false"
+                  :disabled="isEmpty(exportModalFormModel.interval)"
+              />
+            </n-form-item-gi>
+
+            <n-form-item-gi :span="12" label="重合闸动作信息" path="reclosingAct">
+              <n-select
+                  v-model:value="exportModalFormModel.reclosingAct"
+                  placeholder="请选择重合闸动作信息"
+                  :options="exportModalReclosingActOptions"
+                  filterable
+                  :consistent-menu-width="false"
+              />
+            </n-form-item-gi>
+
+            <n-gi :span="12">
+              <n-input-group>
+                <n-grid :cols="12">
+                  <n-form-item-gi :span="7" label="负荷变化" path="loadChange">
+                    <n-select
+                        v-model:value="exportModalFormModel.loadChange"
+                        placeholder="请选择负荷变化"
+                        :options="exportModalLoadChangeOptions"
+                        filterable
+                        :consistent-menu-width="false"
+                    />
+                  </n-form-item-gi>
+                  <n-form-item-gi :span="5" label="功率负荷" path="powerLoadValue">
+                    <n-input v-model:value="exportModalFormModel.powerLoadValue" placeholder="负荷值">
+                      <template #prefix>
+                        <span style="font-size: 12px">P:</span>
+                      </template>
+                      <template #suffix>
+                        <span style="font-size: 12px">MW</span>
+                      </template>
+                    </n-input>
+                  </n-form-item-gi>
+                </n-grid>
+
+              </n-input-group>
+            </n-gi>
+
+
+          </n-grid>
+
+
+        </n-form>
+      </n-card>
+    </n-scrollbar>
+    <template #action>
+      <n-button type="primary" :size="'small'" @click="handleExportModalSave" :loading="isExportModalSaving">保存
+      </n-button>
+      <n-button :size="'small'" @click="showExportModalRef=!showExportModalRef">返回</n-button>
+    </template>
+  </n-modal>
 </template>
 
 <script setup lang="ts">
@@ -273,6 +400,7 @@ import {
   FormInst,
   TreeInst,
   TreeOption,
+  SelectGroupOption,
   NPopconfirm
 } from "naive-ui";
 import {Refresh, Search} from "@vicons/ionicons5";
@@ -282,16 +410,18 @@ import {
   Add24Regular,
   ArrowRepeatAll24Regular,
   ArrowMinimizeVertical24Regular,
-  ChevronRight24Regular
+  ChevronRight24Regular,
+  ArrowExportUp20Regular
 } from '@vicons/fluent'
-import {download_template, import_by_excel} from "@render/api/faultData";
-import {find_all_substation, find_substation_by_id} from "@render/api/substation";
+import {delete_fault_data, download_template, import_by_excel, save_fault_data} from "@render/api/faultData";
+import {find_all_substation, find_by_substation_name, find_substation_by_id} from "@render/api/substation";
 import {find_all_proAct} from "@render/api/proAct";
-import {FaultDataTableRow} from "@common/types/faultData.types";
+import {FaultDataTableRow, FaultSaveModel} from "@common/types/faultData.types";
 import {find_all_switchPos} from "@render/api/switchPos";
-import {find_all_interval, find_by_interval_id} from "@render/api/interval";
+import {find_all_interval, find_by_interval_id, find_by_interval_name} from "@render/api/interval";
 import {Filter, FilterOff, Focus2} from '@vicons/tabler'
 import {getDayString} from "@common/utils/dateUtils";
+import {isEmpty} from "lodash";
 
 onMounted(() => {
   treeNodesInit()
@@ -319,7 +449,6 @@ const handleTreeFocus = () => {
 // 树刷新
 const handleTreeNodeInit = () => {
   treeNodesInit()
-
 }
 
 // 滚动聚焦至当前选中节点
@@ -367,6 +496,7 @@ const handleUpdateExpandedKeys = (keys: Array<string>) => {
 
 const handleUpdateSelectedKeys = (keys: Array<string>) => {
   selectedKeys.value = keys
+  paginationReactive.page = 1
   tableDataInit()
 }
 
@@ -412,7 +542,6 @@ const handleLoad = (node: TreeOption) => {
     }
     resolve()
   })
-
 }
 
 const renderSwitcherIcon = () => {
@@ -437,9 +566,9 @@ const handleSearch = () => {
 
   if (queryParam.value != null) {
     tableDataRef.value = tableDataRefBackUp.value.filter(data => {
-      return data.substationName.includes(queryParam.value) ||
-          data.intervalName.includes(queryParam.value) ||
-          data.faultName.includes(queryParam.value);
+      return data.substationName.includes(queryParam.value.trim()) ||
+          data.intervalName.includes(queryParam.value.trim()) ||
+          data.faultName.includes(queryParam.value.trim());
     })
   } else {
     tableDataRef.value = tableDataRefBackUp.value
@@ -453,10 +582,15 @@ const handleSearch = () => {
 }
 
 // 导入
+const isImporting = ref(false)
+
 const importByExcel = () => {
+  isImporting.value = true
   import_by_excel().then(res => {
+    console.log(res)
     if (res.success) {
       window.$message.success(res.message)
+      treeNodesInit()
       tableDataInit()
     } else {
       window.$notification.create({
@@ -465,7 +599,7 @@ const importByExcel = () => {
         type: "error"
       })
     }
-  })
+  }).finally(() => isImporting.value = false)
 }
 
 // 下载模板
@@ -540,7 +674,7 @@ const createColumns = (): DataTableColumns<FaultDataTableRow> => {
       title: '操作',
       key: 'actions',
       align: 'center',
-      width: 20,
+      width: 12,
       render(row) {
         return h(NSpace, {
           justify: 'center'
@@ -548,11 +682,8 @@ const createColumns = (): DataTableColumns<FaultDataTableRow> => {
           showButton('编辑', () => {
             editModalInit(2, row)
           }),
-          showButton('导出', () => {
-
-          }),
           showConfirmation('删除', () => {
-
+            deleteFaultData(row)
           })
         ])
       }
@@ -583,7 +714,6 @@ const showButton = (text: string, onClick: () => any) => {
       },
       {default: () => text})
 }
-
 const showConfirmation = (text: string, onPositiveClick: () => any) => {
   return h(NPopconfirm, {
     positiveText: '确定',
@@ -733,6 +863,20 @@ const tableDataInit = async () => {
   isTableLoading.value = false
 }
 
+const deleteFaultData = (row: FaultDataTableRow) => {
+  delete_fault_data(row.faultType, row.faultId).then(res => {
+    if (res.success) {
+      window.$message.success(res.message)
+      tableDataInit()
+    } else {
+      window.$notification.create({
+        title: "数据删除失败",
+        content: res.message,
+        type: "error"
+      })
+    }
+  })
+}
 // endregion
 
 // region 新增更新弹出框
@@ -741,20 +885,20 @@ const modalTitle = ref('编辑')
 const isEdit = ref(false)
 
 const editModalFormRef = ref<FormInst | null>(null)
-const editModalModelRef = ref({
-  substationId: null,
-  intervalId: null,
+const editModalModelRef = ref<FaultSaveModel>({
+  substationName: null,
+  intervalName: null,
   faultType: 1,
-  faultId: 1,
+  faultId: null,
   faultName: null,
 })
 const editModalFormRules = ref({
-  substationId: {
+  substationName: {
     required: true,
     trigger: ['input', 'change'],
     message: '请输入变电站名称'
   },
-  intervalId: {
+  intervalName: {
     required: true,
     trigger: ['input', 'change'],
     message: '请输入间隔名称'
@@ -784,8 +928,8 @@ const editModalInit = (type: 1 | 2, data?: FaultDataTableRow) => {
     modalTitle.value = '新增'
     isEdit.value = false
 
-    editModalModelRef.value.substationId = null
-    editModalModelRef.value.intervalId = null
+    editModalModelRef.value.substationName = null
+    editModalModelRef.value.intervalName = null
     editModalModelRef.value.faultType = 1
     editModalModelRef.value.faultId = null
     editModalModelRef.value.faultName = null
@@ -794,8 +938,8 @@ const editModalInit = (type: 1 | 2, data?: FaultDataTableRow) => {
     modalTitle.value = '编辑'
     isEdit.value = true
 
-    editModalModelRef.value.substationId = `${uuid}-${data.substationId}`
-    editModalModelRef.value.intervalId = `${uuid}-${data.intervalId}`
+    editModalModelRef.value.substationName = data.substationName
+    editModalModelRef.value.intervalName = data.intervalName
     editModalModelRef.value.faultType = data.faultType
     editModalModelRef.value.faultId = data.faultId
     editModalModelRef.value.faultName = data.faultName
@@ -809,10 +953,23 @@ const handleModalSave = () => {
 
   editModalFormRef.value.validate(errors => {
     if (!errors) {
-      console.log(
-          editModalModelRef.value
-      )
-
+      isModalSaving.value = true
+      save_fault_data(editModalModelRef.value)
+          .then(res => {
+            if (res.success) {
+              window.$message.success(res.message)
+              showEditModalRef.value = false
+              treeNodesInit()
+              tableDataInit()
+            } else {
+              window.$notification.create({
+                title: "数据保存失败",
+                content: res.message,
+                type: "error"
+              })
+            }
+          })
+          .finally(() => isModalSaving.value = false)
 
     }
   })
@@ -824,7 +981,7 @@ const substationNameOptionsInit = async () => {
 
   substationNameOptions.value = substations.map((v) => ({
     label: v.substationName,
-    value: `${uuid}-${v.id.toString()}`
+    value: v.substationName,
   }))
 }
 
@@ -833,12 +990,85 @@ const intervalNameOptionsInit = async () => {
 
   intervalNameOptions.value = intervals.map((v) => ({
     label: v.intervalName,
-    value: `${uuid}-${v.id.toString()}`
+    value: v.intervalName
   }))
 }
 
 // endregion
 
+// region
+const showExportModalRef = ref(false)
+
+const exportModalFormModel = ref({
+  substation: null,
+  interval: null,
+  proAct: null,
+  switchPos: null,
+  reclosingAct: null, // 重合闸动作
+  loadChange: null, // 负荷变化
+  powerLoadValue: null, // 负荷值
+})
+
+const exportModalSubstationOptions = ref<Array<SelectOption | SelectGroupOption>>()
+const exportModalIntervalOptions = ref<Array<SelectOption | SelectGroupOption>>()
+const exportModalProActOptions = ref<Array<SelectOption | SelectGroupOption>>()
+const exportModalSwitchPosOptions = ref<Array<SelectOption | SelectGroupOption>>()
+const exportModalReclosingActOptions = ref<Array<SelectOption | SelectGroupOption>>()
+const exportModalLoadChangeOptions = ref<Array<SelectOption | SelectGroupOption>>()
+
+const exportModalSubstationOptionsInit = async () => {
+  const substations = (await find_all_substation()).data
+
+  exportModalSubstationOptions.value = substations.map((v) => ({
+    label: v.substationName,
+    value: v.substationName,
+  }))
+}
+
+const handleExportSubstationUpdate = (subsNames: string[]) => {
+
+  exportModalFormModel.value.interval = null
+  exportModalIntervalOptions.value = []
+
+  subsNames.forEach(async subsName => {
+    const substation = (await find_by_substation_name(subsName)).data
+
+    exportModalIntervalOptions.value.push(...substation.interval.map((interval) => ({
+      label: `${substation.substationName}:${interval.intervalName}`,
+      value: interval.intervalName
+    })))
+  })
+}
+
+const handleExportIntervalUpdate = (intervalNames: string[]) => {
+  exportModalFormModel.value.proAct = null
+  exportModalProActOptions.value = []
+
+  exportModalFormModel.value.switchPos = null
+  exportModalSwitchPosOptions.value = []
+
+  intervalNames.forEach(async intervalName=>{
+     const interval = (await find_by_interval_name(intervalName)).data
+
+
+
+  })
+
+}
+
+
+const exportModalInit = () => {
+  exportModalSubstationOptionsInit()
+
+  showExportModalRef.value = true
+}
+
+const isExportModalSaving = ref(false)
+const handleExportModalSave = () => {
+  console.log(exportModalFormModel.value)
+}
+
+// endregion
 const randomNumber = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min + 1) + min)
 }

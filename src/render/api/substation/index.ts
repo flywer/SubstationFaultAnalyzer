@@ -8,6 +8,11 @@ export const find_all_substation = async (): Promise<Result<Substation[]>> => {
     return data
 }
 
+export const find_by_substation_name = async (name: string): Promise<Result<Substation>> => {
+    const {data} = await ipcInstance.send(channels.substation.findBySubstationName, name)
+    return data
+}
+
 export const find_substation_by_id = async (id: string | number): Promise<Result<Substation>> => {
     const {data} = await ipcInstance.send(channels.substation.findSubstationById, typeof id === "string" ? parseInt(id) : id)
     return data

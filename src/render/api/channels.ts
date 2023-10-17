@@ -14,9 +14,12 @@ export const channels = reactive({
         importByExcel: 'faultData/importByExcel',
         findFaultDataByPage: 'faultData/findFaultDataByPage',
         downloadTemplate: 'faultData/downloadTemplate',
+        saveFaultData: 'faultData/saveFaultData',
+        deleteFaultData: 'faultData/deleteFaultData',
     },
     substation: {
         findAll: 'substation/findAll',
+        findBySubstationName: 'substation/findBySubstationName',
         findByIntervalId: 'substation/findByIntervalId',
         findSubstationById: 'substation/findSubstationById',
     },
@@ -31,6 +34,7 @@ export const channels = reactive({
     interval: {
         findByIntervalId: 'interval/findByIntervalId',
         findAllInterval: 'interval/findAllInterval',
+        findByIntervalName: 'interval/findByIntervalName',
     }
 
 })

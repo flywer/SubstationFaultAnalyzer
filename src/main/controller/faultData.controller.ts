@@ -15,8 +15,10 @@ import fs from "fs";
 import {APP_RESOURCE_PATH} from "../../constants/app";
 import {readFsSync} from "@common/utils/fsUtils";
 import {isEmpty} from "lodash";
+import {FaultSaveModel} from "@common/types/faultData.types";
 
 type PageVoAlias = PageVo
+type FaultSaveModelAlias = FaultSaveModel
 
 @Controller()
 export class FaultDataController {
@@ -77,7 +79,10 @@ export class FaultDataController {
 
                                     for (const {substationName, intervalName, proActName, switchPosName} of rowData) {
 
-                                        let substation = await AppDataSource.getRepository(Substation).findOneBy({substationName: substationName});
+                                        let substation = await AppDataSource.getRepository(Substation).findOneBy(
+                                            {
+                                                substationName: substationName
+                                            });
                                         // 如果变电站不存在，则创建新的变电站实体
                                         if (!substation) {
                                             substation = new Substation();
@@ -86,7 +91,13 @@ export class FaultDataController {
                                         }
 
 
-                                        let interval = await AppDataSource.getRepository(Interval).findOneBy({intervalName: intervalName});
+                                        let interval = await AppDataSource.getRepository(Interval).findOneBy(
+                                            {
+                                                intervalName: intervalName,
+                                                substation: {
+                                                    id: substation.id
+                                                }
+                                            });
                                         if (!interval) {
                                             // 创建新的间隔实体并关联变电站
                                             interval = new Interval();
@@ -95,7 +106,12 @@ export class FaultDataController {
                                             await AppDataSource.manager.save(interval);
                                         }
 
-                                        let proAct = await AppDataSource.getRepository(ProAct).findOneBy({proActName: proActName});
+                                        let proAct = await AppDataSource.getRepository(ProAct).findOneBy({
+                                            proActName: proActName,
+                                            interval: {
+                                                id: interval.id
+                                            }
+                                        });
                                         if (!proAct) {
                                             // 创建新的间隔实体并关联变电站
                                             proAct = new ProAct();
@@ -104,7 +120,12 @@ export class FaultDataController {
                                             await AppDataSource.manager.save(proAct);
                                         }
 
-                                        let switchPos = await AppDataSource.getRepository(SwitchPos).findOneBy({switchPosName: switchPosName});
+                                        let switchPos = await AppDataSource.getRepository(SwitchPos).findOneBy({
+                                            switchPosName: switchPosName,
+                                            interval: {
+                                                id: interval.id
+                                            }
+                                        });
                                         if (!switchPos) {
                                             // 创建新的间隔实体并关联变电站
                                             switchPos = new SwitchPos();
@@ -134,8 +155,8 @@ export class FaultDataController {
 
     @IpcHandle(channels.faultData.findFaultDataByPage)
     public async handleFindFaultDataByPage(pageParams: PageVoAlias) {
+        console.log(pageParams)
     }
-
 
     @IpcHandle(channels.faultData.downloadTemplate)
     public handleDownloadTemplate() {
@@ -161,4 +182,90 @@ export class FaultDataController {
             })
         })
     }
+
+    @IpcHandle(channels.faultData.saveFaultData)
+    public async handleSaveFaultData(model: FaultSaveModelAlias) {
+
+        try {
+            let substation = await AppDataSource.getRepository(Substation).findOneBy({substationName: model.substationName});
+            // 如果变电站不存在，则创建新的变电站实体
+            if (!substation) {
+                substation = new Substation();
+                substation.substationName = model.substationName;
+                await AppDataSource.manager.save(substation);
+            }
+
+            let interval = await AppDataSource.getRepository(Interval).findOneBy({
+                intervalName: model.intervalName,
+                substation: {
+                    id: substation.id
+                }
+            });
+            if (!interval) {
+                // 创建新的间隔实体并关联变电站
+                interval = new Interval();
+                interval.intervalName = model.intervalName;
+                interval.substation = substation;
+                await AppDataSource.manager.save(interval);
+            }
+
+            if (model.faultType == 1) {
+                let proAct = await AppDataSource.getRepository(ProAct).findOneBy({
+                    proActName: model.faultName,
+                    interval: {
+                        id: interval.id
+                    }
+                });
+                if (!proAct) {
+                    // 创建新的间隔实体并关联变电站
+                    proAct = new ProAct();
+                    proAct.id = model.faultId
+                    proAct.proActName = model.faultName;
+                    proAct.interval = interval;
+                    await AppDataSource.manager.save(proAct);
+                }
+
+            } else {
+                let switchPos = await AppDataSource.getRepository(SwitchPos).findOneBy({
+                    switchPosName: model.faultName,
+                    interval: {
+                        id: interval.id
+                    }
+                });
+                if (!switchPos) {
+                    // 创建新的间隔实体并关联变电站
+                    switchPos = new SwitchPos();
+                    switchPos.id = model.faultId
+                    switchPos.switchPosName = model.faultName;
+                    switchPos.interval = interval;
+                    await AppDataSource.manager.save(switchPos);
+                }
+            }
+
+            return success('保存成功')
+        } catch (e) {
+            log.error(e)
+            return failure(`保存失败,${e}`)
+        }
+    }
+
+    @IpcHandle(channels.faultData.deleteFaultData)
+    public async handleDeleteFaultData(faultType: number, faultId: number) {
+        try {
+            if (faultType == 1) {
+                await AppDataSource.getRepository(ProAct).delete(faultId)
+            } else if (faultType == 2) {
+                await AppDataSource.getRepository(SwitchPos).delete(faultId)
+            }
+
+            return success('删除成功')
+        } catch (e) {
+            log.error(e)
+            return success(`删除失败,${e}`)
+        }
+
+    }
 }
+
+
+
