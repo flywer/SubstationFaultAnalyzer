@@ -281,15 +281,17 @@
       :size="'small'"
       style="width: 760px"
   >
-    <n-scrollbar class="pr-2" style="max-height: 500px;" trigger="hover">
-      <n-card>
+    <n-card :content-style="{paddingRight:'12px',paddingTop:0,paddingBottom:0}">
+      <n-scrollbar class="pr-4" style="max-height: 450px;" trigger="hover">
         <n-form
-            label-placement="top"
+            class="pt-4 pb-4"
+            ref="exportModalFormRef"
             :model="exportModalFormModel"
+            :rules="exportModalFormRules"
             :size="'small'"
+            label-placement="top"
         >
           <n-grid :cols="12" :x-gap="4">
-
             <n-form-item-gi :span="12" label="变电站" path="substation">
               <n-select
                   v-model:value="exportModalFormModel.substation"
@@ -297,6 +299,7 @@
                   :options="exportModalSubstationOptions"
                   filterable
                   multiple
+                  clearable
                   :consistent-menu-width="false"
                   @update:value="handleExportSubstationUpdate"
               />
@@ -309,6 +312,7 @@
                   :options="exportModalIntervalOptions"
                   filterable
                   multiple
+                  clearable
                   :consistent-menu-width="false"
                   :disabled="isEmpty(exportModalFormModel.substation)"
                   @update:value="handleExportIntervalUpdate"
@@ -318,22 +322,26 @@
             <n-form-item-gi :span="12" label="保护动作信息" path="proAct">
               <n-select
                   v-model:value="exportModalFormModel.proAct"
-                  :placeholder="isEmpty(exportModalFormModel.interval)?'请先选择间隔':'请选择保护动作信息'"
+                  :placeholder="exportModalFormModel.interval!=null && exportModalFormModel.interval.length>0?'请先选择间隔':'请选择保护动作信息'"
                   :options="exportModalProActOptions"
                   filterable
+                  multiple
+                  clearable
                   :consistent-menu-width="false"
-                  :disabled="isEmpty(exportModalFormModel.interval)"
+                  :disabled="!(exportModalFormModel.interval!=null && exportModalFormModel.interval.length>0)"
               />
             </n-form-item-gi>
 
             <n-form-item-gi :span="12" label="开关变位信息" path="switchPos">
               <n-select
                   v-model:value="exportModalFormModel.switchPos"
-                  :placeholder="isEmpty(exportModalFormModel.interval)?'请先选择间隔':'请选择开关变位信息'"
+                  :placeholder="exportModalFormModel.interval!=null && exportModalFormModel.interval.length>0?'请先选择间隔':'请选择开关变位信息'"
                   :options="exportModalSwitchPosOptions"
                   filterable
+                  multiple
+                  clearable
                   :consistent-menu-width="false"
-                  :disabled="isEmpty(exportModalFormModel.interval)"
+                  :disabled="!(exportModalFormModel.interval!=null && exportModalFormModel.interval.length>0)"
               />
             </n-form-item-gi>
 
@@ -343,6 +351,7 @@
                   placeholder="请选择重合闸动作信息"
                   :options="exportModalReclosingActOptions"
                   filterable
+                  clearable
                   :consistent-menu-width="false"
               />
             </n-form-item-gi>
@@ -356,11 +365,12 @@
                         placeholder="请选择负荷变化"
                         :options="exportModalLoadChangeOptions"
                         filterable
+                        clearable
                         :consistent-menu-width="false"
                     />
                   </n-form-item-gi>
                   <n-form-item-gi :span="5" label="功率负荷" path="powerLoadValue">
-                    <n-input v-model:value="exportModalFormModel.powerLoadValue" placeholder="负荷值">
+                    <n-input v-model:value="exportModalFormModel.powerLoadValue" placeholder="负荷值" clearable>
                       <template #prefix>
                         <span style="font-size: 12px">P:</span>
                       </template>
@@ -379,8 +389,24 @@
 
 
         </n-form>
-      </n-card>
-    </n-scrollbar>
+      </n-scrollbar>
+    </n-card>
+
+    <n-card :content-style="{paddingRight:'12px',paddingTop:0,paddingBottom:0}" class="mt-4"
+            v-if="summaryText.length>0">
+      <n-scrollbar class="pr-4" style="max-height: 240px;" trigger="hover">
+        <n-input class="mt-4 mb-4" v-model:value="summaryText" type="textarea">
+          <template #suffix>
+            <n-button circle size="small" @click="copyText(summaryText)">
+              <template #icon>
+                <Copy24Regular/>
+              </template>
+            </n-button>
+          </template>
+        </n-input>
+      </n-scrollbar>
+    </n-card>
+
     <template #action>
       <n-button type="primary" :size="'small'" @click="handleExportModalSave" :loading="isExportModalSaving">保存
       </n-button>
@@ -411,17 +437,19 @@ import {
   ArrowRepeatAll24Regular,
   ArrowMinimizeVertical24Regular,
   ChevronRight24Regular,
-  ArrowExportUp20Regular
+  ArrowExportUp20Regular,
+  Copy24Regular
 } from '@vicons/fluent'
 import {delete_fault_data, download_template, import_by_excel, save_fault_data} from "@render/api/faultData";
 import {find_all_substation, find_by_substation_name, find_substation_by_id} from "@render/api/substation";
 import {find_all_proAct} from "@render/api/proAct";
 import {FaultDataTableRow, FaultSaveModel} from "@common/types/faultData.types";
 import {find_all_switchPos} from "@render/api/switchPos";
-import {find_all_interval, find_by_interval_id, find_by_interval_name} from "@render/api/interval";
+import {find_all_interval, find_by_interval_id} from "@render/api/interval";
 import {Filter, FilterOff, Focus2} from '@vicons/tabler'
 import {getDayString} from "@common/utils/dateUtils";
 import {isEmpty} from "lodash";
+import {clipboard_write_text} from "@render/api/app/basic.api";
 
 onMounted(() => {
   treeNodesInit()
@@ -999,22 +1027,91 @@ const intervalNameOptionsInit = async () => {
 // region
 const showExportModalRef = ref(false)
 
+const exportModalFormRef = ref<FormInst | null>(null)
 const exportModalFormModel = ref({
   substation: null,
-  interval: null,
-  proAct: null,
-  switchPos: null,
+  interval: null as string[],
+  proAct: null as string[],
+  switchPos: null as string[],
   reclosingAct: null, // 重合闸动作
   loadChange: null, // 负荷变化
   powerLoadValue: null, // 负荷值
+})
+
+const exportModalFormRules = ref({
+  substation: {
+    type: 'array',
+    required: true,
+    trigger: ['change'],
+    message: '请选择变电站'
+  },
+  interval: {
+    type: 'array',
+    required: true,
+    trigger: ['change'],
+    message: '请选择间隔'
+  },
+  proAct: {
+    type: 'array',
+    required: true,
+    trigger: ['change'],
+    message: '请选择保护动作信息'
+  },
+  switchPos: {
+    type: 'array',
+    required: true,
+    trigger: ['change'],
+    message: '请选择开关变位信息'
+  },
+  reclosingAct: {
+    required: true,
+    trigger: ['change'],
+    message: '请选择重合闸动作'
+  },
+  loadChange: {
+    required: true,
+    trigger: ['change'],
+    message: '请选择负荷变化'
+  },
+  powerLoadValue: {
+    required: true,
+    trigger: ['input'],
+    message: '请输入负荷值'
+  },
 })
 
 const exportModalSubstationOptions = ref<Array<SelectOption | SelectGroupOption>>()
 const exportModalIntervalOptions = ref<Array<SelectOption | SelectGroupOption>>()
 const exportModalProActOptions = ref<Array<SelectOption | SelectGroupOption>>()
 const exportModalSwitchPosOptions = ref<Array<SelectOption | SelectGroupOption>>()
-const exportModalReclosingActOptions = ref<Array<SelectOption | SelectGroupOption>>()
-const exportModalLoadChangeOptions = ref<Array<SelectOption | SelectGroupOption>>()
+const exportModalReclosingActOptions = ref<Array<SelectOption | SelectGroupOption>>([
+  {
+    label: '重合闸动作成功',
+    value: '重合闸动作成功'
+  },
+  {
+    label: '重合闸动作不成功',
+    value: '重合闸动作不成功'
+  },
+  {
+    label: '重合闸未投',
+    value: '重合闸未投'
+  },
+  {
+    label: '重合闸未动作',
+    value: '重合闸未动作'
+  }
+])
+const exportModalLoadChangeOptions = ref<Array<SelectOption | SelectGroupOption>>([
+  {
+    label: '跳闸前负荷',
+    value: '跳闸前负荷'
+  },
+  {
+    label: '跳闸后负荷',
+    value: '跳闸后负荷'
+  }
+])
 
 const exportModalSubstationOptionsInit = async () => {
   const substations = (await find_all_substation()).data
@@ -1025,37 +1122,54 @@ const exportModalSubstationOptionsInit = async () => {
   }))
 }
 
-const handleExportSubstationUpdate = (subsNames: string[]) => {
+const handleExportSubstationUpdate = async (subsNames: string[]) => {
 
-  exportModalFormModel.value.interval = null
   exportModalIntervalOptions.value = []
 
-  subsNames.forEach(async subsName => {
+  for (const subsName of subsNames) {
     const substation = (await find_by_substation_name(subsName)).data
 
     exportModalIntervalOptions.value.push(...substation.interval.map((interval) => ({
       label: `${substation.substationName}:${interval.intervalName}`,
-      value: interval.intervalName
+      value: interval.id.toString()
     })))
-  })
+  }
+
+  if (!isEmpty(exportModalFormModel.value.interval)) {
+    exportModalFormModel.value.interval = exportModalFormModel.value.interval.filter(id => exportModalIntervalOptions.value.map(opt => opt.value).includes(id))
+  }
+
 }
 
-const handleExportIntervalUpdate = (intervalNames: string[]) => {
-  exportModalFormModel.value.proAct = null
-  exportModalProActOptions.value = []
+const handleExportIntervalUpdate = async (intervalIds: string[]) => {
 
-  exportModalFormModel.value.switchPos = null
+  exportModalProActOptions.value = []
   exportModalSwitchPosOptions.value = []
 
-  intervalNames.forEach(async intervalName=>{
-     const interval = (await find_by_interval_name(intervalName)).data
+  for (const intervalId of intervalIds) {
+    const interval = (await find_by_interval_id(parseInt(intervalId))).data
 
+    exportModalProActOptions.value.push(...interval.proAct.map((v) => ({
+      label: `${interval.intervalName}:${v.proActName}`,
+      value: v.id.toString()
+    })))
 
+    exportModalSwitchPosOptions.value.push(...interval.switchPos.map((v) => ({
+      label: `${interval.intervalName}:${v.switchPosName}`,
+      value: v.id.toString()
+    })))
 
-  })
+  }
+
+  if (!isEmpty(exportModalFormModel.value.proAct)) {
+    exportModalFormModel.value.proAct = exportModalFormModel.value.proAct.filter(id => exportModalProActOptions.value.map(opt => opt.value).includes(id))
+  }
+
+  if (!isEmpty(exportModalFormModel.value.switchPos)) {
+    exportModalFormModel.value.switchPos = exportModalFormModel.value.switchPos.filter(id => exportModalSwitchPosOptions.value.map(opt => opt.value).includes(id))
+  }
 
 }
-
 
 const exportModalInit = () => {
   exportModalSubstationOptionsInit()
@@ -1064,13 +1178,68 @@ const exportModalInit = () => {
 }
 
 const isExportModalSaving = ref(false)
-const handleExportModalSave = () => {
-  console.log(exportModalFormModel.value)
+const summaryText = ref('')
+const handleExportModalSave = async () => {
+
+  exportModalFormRef.value?.validate(async errors => {
+    if (!errors) {
+      summaryText.value = ''
+
+      for (const intervalId of exportModalFormModel.value.interval) {
+        const interval = (await find_by_interval_id(parseInt(intervalId))).data
+
+        let proActText = ''
+        exportModalFormModel.value.proAct.forEach(proActId => {
+          if (interval.proAct.map(p => p.id).includes(parseInt(proActId))) {
+            const proAct = interval.proAct.find(p => p.id == parseInt(proActId))
+
+            if (proAct.proActName.startsWith(interval.intervalName)) {
+              proActText += proAct.proActName.substring(interval.intervalName.length) + '、'
+            } else {
+              proActText += proAct.proActName + '、'
+            }
+          }
+        })
+
+        if (isEmpty(proActText.slice(0, -1))) {
+          proActText = ''
+        } else {
+          proActText = `${proActText.slice(0, -1)}，`
+        }
+
+        let switchPosText = ''
+        exportModalFormModel.value.switchPos.forEach(switchPosId => {
+          if (interval.switchPos.map(p => p.id).includes(parseInt(switchPosId))) {
+            const switchPos = interval.switchPos.find(p => p.id == parseInt(switchPosId))
+            switchPosText += switchPos.switchPosName + '、'
+          }
+        })
+
+        if (isEmpty(switchPosText.slice(0, -1))) {
+          switchPosText = ''
+        } else {
+          switchPosText = `${switchPosText.slice(0, -1)}，`
+        }
+
+        summaryText.value += `${interval.substation.substationName}${interval.intervalName}，${proActText}${switchPosText}${exportModalFormModel.value.reclosingAct}，${exportModalFormModel.value.loadChange}P:${exportModalFormModel.value.powerLoadValue}MW。\n`
+      }
+
+      summaryText.value = summaryText.value.slice(0, -1)
+    }
+  })
+
+
 }
 
 // endregion
 const randomNumber = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min + 1) + min)
+}
+
+const copyText = (text: string) => {
+  clipboard_write_text(text).then(() => {
+    window.$message.success('复制成功')
+  })
 }
 
 </script>

@@ -3,6 +3,7 @@ import {channels} from "@render/api/channels";
 import {failure, Result, success} from "@main/vo/resultVo";
 import {autoUpdater} from "electron-updater";
 import log from "electron-log";
+import {clipboard} from "electron";
 
 @Controller()
 export class AppController {
@@ -21,5 +22,10 @@ export class AppController {
             result.data = e
         }
         return result
+    }
+
+    @IpcHandle(channels.app.clipboard.writeText)
+    public handleClipboardWriteText(text: string) {
+        clipboard.writeText(text)
     }
 }

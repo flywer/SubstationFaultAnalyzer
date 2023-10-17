@@ -3,6 +3,9 @@ import {reactive} from "vue";
 export const channels = reactive({
     app: {
         getAppVersion: "app/getAppVersion",
+        clipboard:{
+            writeText:"app/clipboard/writeText",
+        }
     },
     window: {
         max: 'window/max',
