@@ -2,3 +2,4 @@ dist
 public
 src
 assets
+electron-builder.config.js
