@@ -148,6 +148,7 @@ export class FaultDataController {
                         }
 
                     }
+                    resolve(failure('未选择文件'))
                 })
         })
 

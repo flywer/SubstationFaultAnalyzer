@@ -3,6 +3,10 @@ import {reactive} from "vue";
 export const channels = reactive({
     app: {
         getAppVersion: "app/getAppVersion",
+        getSettings: "app/getSettings",
+        updateSettings: "app/updateSettings",
+        openDefaultBrowser: "app/openDefaultBrowser",
+        relaunch: "app/relaunch",
         clipboard:{
             writeText:"app/clipboard/writeText",
         }

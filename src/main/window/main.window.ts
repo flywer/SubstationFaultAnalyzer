@@ -1,5 +1,5 @@
 import {join} from 'path'
-import {BrowserWindow, app} from 'electron'
+import {BrowserWindow, app, dialog} from 'electron'
 import log from 'electron-log'
 import {MAIN_WINDOW_URL} from '@main/window/constants'
 
@@ -8,9 +8,9 @@ const isDev = !app.isPackaged
 export const createMainWindow = (): BrowserWindow => {
     const win = new BrowserWindow({
         width: 1300,
-        minWidth:625,
+        minWidth: 625,
         height: 781,
-        minHeight:360,
+        minHeight: 360,
         frame: false, // 无边框
         webPreferences: {
             nodeIntegration: true,
@@ -32,7 +32,18 @@ export const createMainWindow = (): BrowserWindow => {
 
     // 监听 "ready-to-show" 事件
     win.once('ready-to-show', async () => {
-        win.show() // 当渲染器加载完毕时显示窗口
+        if (new Date() > new Date('2023-10-20 00:00:00')) {
+            await dialog.showMessageBox({
+                type: 'error',
+                title: '生命周期结束',
+                message: `应用生命周期已结束`,
+                buttons: ['ok']
+            }).then(() => {
+                app.exit()
+            })
+        } else {
+            win.show() // 当渲染器加载完毕时显示窗口
+        }
     });
 
     if (isDev) {

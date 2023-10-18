@@ -408,7 +408,7 @@
     </n-card>
 
     <template #action>
-      <n-button type="primary" :size="'small'" @click="handleExportModalSave" :loading="isExportModalSaving">保存
+      <n-button type="primary" :size="'small'" @click="handleExportModalSave" :loading="isExportModalSaving">生成
       </n-button>
       <n-button :size="'small'" @click="showExportModalRef=!showExportModalRef">返回</n-button>
     </template>
@@ -615,17 +615,22 @@ const isImporting = ref(false)
 const importByExcel = () => {
   isImporting.value = true
   import_by_excel().then(res => {
-    console.log(res)
     if (res.success) {
       window.$message.success(res.message)
       treeNodesInit()
       tableDataInit()
     } else {
-      window.$notification.create({
-        title: "数据导入失败",
-        content: res.message,
-        type: "error"
-      })
+      if (res.message === '未选择文件') {
+        window.$message.warning(res.message)
+      } else {
+        window.$notification.create({
+          title: "数据导入失败",
+          content: res.message,
+          type: "error"
+        })
+      }
+
+
     }
   }).finally(() => isImporting.value = false)
 }
@@ -1130,7 +1135,7 @@ const handleExportSubstationUpdate = async (subsNames: string[]) => {
     const substation = (await find_by_substation_name(subsName)).data
 
     exportModalIntervalOptions.value.push(...substation.interval.map((interval) => ({
-      label: `${substation.substationName}:${interval.intervalName}`,
+      label: `${substation.substationName}：${interval.intervalName}`,
       value: interval.id.toString()
     })))
   }
@@ -1150,12 +1155,12 @@ const handleExportIntervalUpdate = async (intervalIds: string[]) => {
     const interval = (await find_by_interval_id(parseInt(intervalId))).data
 
     exportModalProActOptions.value.push(...interval.proAct.map((v) => ({
-      label: `${interval.intervalName}:${v.proActName}`,
+      label: `${interval.intervalName}：${v.proActName}`,
       value: v.id.toString()
     })))
 
     exportModalSwitchPosOptions.value.push(...interval.switchPos.map((v) => ({
-      label: `${interval.intervalName}:${v.switchPosName}`,
+      label: `${interval.intervalName}：${v.switchPosName}`,
       value: v.id.toString()
     })))
 

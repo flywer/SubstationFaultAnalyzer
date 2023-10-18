@@ -33,8 +33,9 @@ import {routeName} from "@render/router";
 import {h, ref, onMounted} from 'vue'
 import type {MenuOption, MenuInst} from 'naive-ui'
 import {RouterLink, useRouter} from "vue-router";
-import {HomeOutlined} from '@vicons/antd'
 import {renderIcon} from "@render/utils/common/renderIcon";
+import {SettingsOutline} from '@vicons/ionicons5'
+import {WindowWrench24Regular} from '@vicons/fluent'
 
 const router = useRouter()
 
@@ -52,22 +53,22 @@ const menuOptions: MenuOption[] = [
             {default: () => '故障信息'}
         ),
     key: routeName.faultInfoMgt,
-    icon: renderIcon(HomeOutlined)
-  }/*,
+    icon: renderIcon(WindowWrench24Regular)
+  },
   {
     label: () =>
         h(
             RouterLink,
             {
               to: {
-                name: routeName.view2,
+                name: routeName.settings,
               }
             },
-            {default: () => '页面'}
+            {default: () => '应用设置'}
         ),
-    key: routeName.view2,
-    icon: renderIcon(AccessibleIcon)
-  }*/
+    key: routeName.settings,
+    icon: renderIcon(SettingsOutline)
+  }
 ]
 
 // 菜单实例

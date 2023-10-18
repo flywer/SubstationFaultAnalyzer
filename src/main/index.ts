@@ -14,6 +14,8 @@ import {SubstationController} from "@main/controller/substation.controller";
 import {ProActController} from "@main/controller/proAct.controller";
 import {SwitchPosController} from "@main/controller/switchPos.controller";
 import {IntervalController} from "@main/controller/interval.controller";
+import {tray, trayInit} from "../app/app.tray";
+import {getAppSetup} from "@common/utils/appConfigUtils";
 
 process["env"].ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 
@@ -26,10 +28,25 @@ async function electronAppInit() {
     // 禁用缓存
     app.commandLine.appendSwitch('--disable-http-cache')
 
+    ///应用启动后的操作
+    app.whenReady().then(async () => {
+        const setup = await getAppSetup()
+        if (setup != null && setup.enableSysTray) {
+            trayInit()
+        }
+        /* if (setup != null && setup.autoUpdate) {
+             handleAutoUpdate()
+         }*/
+    })
 
     app.on('window-all-closed', () => {
-        if (process.platform !== 'darwin')
+        if (process.platform !== 'darwin') {
             app.exit()
+            if (tray != null) {
+                tray.destroy()
+            }
+        }
+
     })
 
     if (isDev) {
@@ -91,9 +108,6 @@ bootstrap()
  * 创建cron、config文件夹，防止不存在报错
  */
 function appDataFolderInit() {
-    fs.mkdir(join(APP_DATA_PATH, 'cron'), {recursive: true}, (error) => {
-        if (error) log.error(error)
-    })
     fs.mkdir(join(APP_DATA_PATH, 'config'), {recursive: true}, (error) => {
         if (error) log.error(error)
     })
