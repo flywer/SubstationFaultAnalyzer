@@ -1247,12 +1247,12 @@ const handleExportModalSave = async () => {
         if (!exportModalFormModel.value.isLoadBeforeTripping && !exportModalFormModel.value.isLoadAfterTripping) {
           summaryText.value += '。'
         } else if (exportModalFormModel.value.isLoadBeforeTripping && !exportModalFormModel.value.isLoadAfterTripping) {
-          summaryText.value += `，跳闸前负荷P${exportModalFormModel.value.loadBeforeTrippingValue}MW。`
+          summaryText.value += `，跳闸前负荷P:${exportModalFormModel.value.loadBeforeTrippingValue}MW。`
         } else if (exportModalFormModel.value.isLoadAfterTripping && !exportModalFormModel.value.isLoadBeforeTripping) {
-          summaryText.value += `，跳闸后负荷P${exportModalFormModel.value.loadAfterTrippingValue}MW。`
+          summaryText.value += `，跳闸后负荷P:${exportModalFormModel.value.loadAfterTrippingValue}MW。`
         } else if (exportModalFormModel.value.isLoadBeforeTripping && exportModalFormModel.value.isLoadAfterTripping) {
-          summaryText.value += `，跳闸前负荷P${exportModalFormModel.value.loadBeforeTrippingValue}MW` +
-              `，跳闸后负荷P${exportModalFormModel.value.loadAfterTrippingValue}MW。`
+          summaryText.value += `，跳闸前负荷P:${exportModalFormModel.value.loadBeforeTrippingValue}MW` +
+              `，跳闸后负荷P:${exportModalFormModel.value.loadAfterTrippingValue}MW。`
         }
 
         summaryText.value += `\n`
