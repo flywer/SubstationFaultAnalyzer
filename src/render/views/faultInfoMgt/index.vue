@@ -281,120 +281,128 @@
       :size="'small'"
       style="width: 760px"
   >
-    <n-card :content-style="{paddingRight:'12px',paddingTop:0,paddingBottom:0}">
-      <n-scrollbar class="pr-4" style="max-height: 450px;" trigger="hover">
-        <n-form
-            class="pt-4 pb-4"
-            ref="exportModalFormRef"
-            :model="exportModalFormModel"
-            :rules="exportModalFormRules"
-            :size="'small'"
-            label-placement="top"
-        >
-          <n-grid :cols="12" :x-gap="4">
-            <n-form-item-gi :span="12" label="变电站" path="substation">
-              <n-select
-                  v-model:value="exportModalFormModel.substation"
-                  placeholder="请选择变电站"
-                  :options="exportModalSubstationOptions"
-                  filterable
-                  multiple
-                  clearable
-                  :consistent-menu-width="false"
-                  @update:value="handleExportSubstationUpdate"
-              />
-            </n-form-item-gi>
+    <n-scrollbar class="pr-4" style="max-height: 600px;" trigger="hover">
+      <n-card :content-style="{paddingRight:'12px',paddingTop:0,paddingBottom:0}">
+        <n-scrollbar class="pr-4" style="max-height: 400px;" trigger="hover">
+          <n-form
+              class="pt-4 pb-4"
+              ref="exportModalFormRef"
+              :model="exportModalFormModel"
+              :rules="exportModalFormRules"
+              :size="'small'"
+              label-placement="top"
+          >
+            <n-grid :cols="12" :x-gap="4">
+              <n-form-item-gi :span="12" label="变电站" path="substation">
+                <n-select
+                    v-model:value="exportModalFormModel.substation"
+                    placeholder="请选择变电站"
+                    :options="exportModalSubstationOptions"
+                    filterable
+                    multiple
+                    clearable
+                    :consistent-menu-width="false"
+                    @update:value="handleExportSubstationUpdate"
+                />
+              </n-form-item-gi>
 
-            <n-form-item-gi :span="12" label="间隔" path="interval">
-              <n-select
-                  v-model:value="exportModalFormModel.interval"
-                  :placeholder="isEmpty(exportModalFormModel.substation)?'请先选择变电站':'请选择间隔'"
-                  :options="exportModalIntervalOptions"
-                  filterable
-                  multiple
-                  clearable
-                  :consistent-menu-width="false"
-                  :disabled="isEmpty(exportModalFormModel.substation)"
-                  @update:value="handleExportIntervalUpdate"
-              />
-            </n-form-item-gi>
+              <n-form-item-gi :span="12" label="间隔" path="interval">
+                <n-select
+                    v-model:value="exportModalFormModel.interval"
+                    :placeholder="isEmpty(exportModalFormModel.substation)?'请先选择变电站':'请选择间隔'"
+                    :options="exportModalIntervalOptions"
+                    filterable
+                    multiple
+                    clearable
+                    :consistent-menu-width="false"
+                    :disabled="isEmpty(exportModalFormModel.substation)"
+                    @update:value="handleExportIntervalUpdate"
+                />
+              </n-form-item-gi>
 
-            <n-form-item-gi :span="12" label="保护动作信息" path="proAct">
-              <n-select
-                  v-model:value="exportModalFormModel.proAct"
-                  :placeholder="exportModalFormModel.interval!=null && exportModalFormModel.interval.length>0?'请先选择间隔':'请选择保护动作信息'"
-                  :options="exportModalProActOptions"
-                  filterable
-                  multiple
-                  clearable
-                  :consistent-menu-width="false"
-                  :disabled="!(exportModalFormModel.interval!=null && exportModalFormModel.interval.length>0)"
-              />
-            </n-form-item-gi>
+              <n-form-item-gi :span="12" label="保护动作信息" path="proAct">
+                <n-select
+                    v-model:value="exportModalFormModel.proAct"
+                    :placeholder="exportModalFormModel.interval!=null && exportModalFormModel.interval.length>0?'请先选择间隔':'请选择保护动作信息'"
+                    :options="exportModalProActOptions"
+                    filterable
+                    multiple
+                    clearable
+                    :consistent-menu-width="false"
+                    :disabled="!(exportModalFormModel.interval!=null && exportModalFormModel.interval.length>0)"
+                />
+              </n-form-item-gi>
 
-            <n-form-item-gi :span="12" label="开关变位信息" path="switchPos">
-              <n-select
-                  v-model:value="exportModalFormModel.switchPos"
-                  :placeholder="exportModalFormModel.interval!=null && exportModalFormModel.interval.length>0?'请先选择间隔':'请选择开关变位信息'"
-                  :options="exportModalSwitchPosOptions"
-                  filterable
-                  multiple
-                  clearable
-                  :consistent-menu-width="false"
-                  :disabled="!(exportModalFormModel.interval!=null && exportModalFormModel.interval.length>0)"
-              />
-            </n-form-item-gi>
+              <n-form-item-gi :span="12" label="开关变位信息" path="switchPos">
+                <n-select
+                    v-model:value="exportModalFormModel.switchPos"
+                    :placeholder="exportModalFormModel.interval!=null && exportModalFormModel.interval.length>0?'请先选择间隔':'请选择开关变位信息'"
+                    :options="exportModalSwitchPosOptions"
+                    filterable
+                    multiple
+                    clearable
+                    :consistent-menu-width="false"
+                    :disabled="!(exportModalFormModel.interval!=null && exportModalFormModel.interval.length>0)"
+                />
+              </n-form-item-gi>
 
-            <n-form-item-gi :span="12" label="重合闸动作信息" path="reclosingAct">
-              <n-select
-                  v-model:value="exportModalFormModel.reclosingAct"
-                  placeholder="请选择重合闸动作信息"
-                  :options="exportModalReclosingActOptions"
-                  filterable
-                  clearable
-                  :consistent-menu-width="false"
-              />
-            </n-form-item-gi>
+              <n-form-item-gi :span="12" label="重合闸动作信息" path="reclosingAct">
+                <n-select
+                    v-model:value="exportModalFormModel.reclosingAct"
+                    placeholder="请选择重合闸动作信息"
+                    :options="exportModalReclosingActOptions"
+                    filterable
+                    clearable
+                    :consistent-menu-width="false"
+                />
+              </n-form-item-gi>
 
-            <n-gi :span="12">
-              <n-input-group>
-                <n-grid :cols="12">
-                  <n-form-item-gi :span="7" label="负荷变化" path="loadChange">
-                    <n-select
-                        v-model:value="exportModalFormModel.loadChange"
-                        placeholder="请选择负荷变化"
-                        :options="exportModalLoadChangeOptions"
-                        filterable
-                        clearable
-                        :consistent-menu-width="false"
-                    />
-                  </n-form-item-gi>
-                  <n-form-item-gi :span="5" label="功率负荷" path="powerLoadValue">
-                    <n-input v-model:value="exportModalFormModel.powerLoadValue" placeholder="负荷值" clearable>
-                      <template #prefix>
-                        <span style="font-size: 12px">P:</span>
-                      </template>
-                      <template #suffix>
-                        <span style="font-size: 12px">MW</span>
-                      </template>
-                    </n-input>
-                  </n-form-item-gi>
-                </n-grid>
+              <n-gi :span="12">
+                <n-input-group>
+                  <n-grid :cols="12">
+                    <n-form-item-gi :span="2" label="跳闸前负荷" label-placement="left">
+                      <n-checkbox v-model:checked="exportModalFormModel.isLoadBeforeTripping"/>
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="10" path="loadBeforeTrippingValue" label-placement="left">
+                      <n-input v-model:value="exportModalFormModel.loadBeforeTrippingValue" placeholder="负荷值"
+                               clearable>
+                        <template #prefix>
+                          <span style="font-size: 12px">P:</span>
+                        </template>
+                        <template #suffix>
+                          <span style="font-size: 12px">MW</span>
+                        </template>
+                      </n-input>
+                    </n-form-item-gi>
 
-              </n-input-group>
-            </n-gi>
+                    <n-form-item-gi :span="2" label="跳闸后负荷" label-placement="left">
+                      <n-checkbox v-model:checked="exportModalFormModel.isLoadAfterTripping"/>
+                    </n-form-item-gi>
+                    <n-form-item-gi :span="10" path="loadAfterTrippingValue" label-placement="left">
+                      <n-input v-model:value="exportModalFormModel.loadAfterTrippingValue" placeholder="负荷值"
+                               clearable>
+                        <template #prefix>
+                          <span style="font-size: 12px">P:</span>
+                        </template>
+                        <template #suffix>
+                          <span style="font-size: 12px">MW</span>
+                        </template>
+                      </n-input>
+                    </n-form-item-gi>
+                  </n-grid>
 
+                </n-input-group>
+              </n-gi>
 
-          </n-grid>
+            </n-grid>
 
+          </n-form>
+        </n-scrollbar>
+      </n-card>
 
-        </n-form>
-      </n-scrollbar>
-    </n-card>
-
-    <n-card :content-style="{paddingRight:'12px',paddingTop:0,paddingBottom:0}" class="mt-4"
-            v-if="summaryText.length>0">
-      <n-scrollbar class="pr-4" style="max-height: 240px;" trigger="hover">
+      <n-card :content-style="{paddingRight:'12px',paddingTop:0,paddingBottom:0}" class="mt-4"
+              v-if="summaryText.length>0">
+        <!--        <n-scrollbar class="pr-4" style="max-height: 200px;" trigger="hover">-->
         <n-input class="mt-4 mb-4" v-model:value="summaryText" type="textarea">
           <template #suffix>
             <n-button circle size="small" @click="copyText(summaryText)">
@@ -404,11 +412,13 @@
             </n-button>
           </template>
         </n-input>
-      </n-scrollbar>
-    </n-card>
+        <!--        </n-scrollbar>-->
+      </n-card>
+    </n-scrollbar>
 
     <template #action>
-      <n-button type="primary" :size="'small'" @click="handleExportModalSave" :loading="isExportModalSaving">生成
+      <n-button quaternary type="info" :size="'small'" @click="modelReset">清空表单</n-button>
+      <n-button type="primary" :size="'small'" @click="handleExportModalSave" :loading="isExportModalSaving">生成文本
       </n-button>
       <n-button :size="'small'" @click="showExportModalRef=!showExportModalRef">返回</n-button>
     </template>
@@ -427,7 +437,8 @@ import {
   TreeInst,
   TreeOption,
   SelectGroupOption,
-  NPopconfirm
+  NPopconfirm,
+  FormItemRule
 } from "naive-ui";
 import {Refresh, Search} from "@vicons/ionicons5";
 import {
@@ -447,7 +458,7 @@ import {FaultDataTableRow, FaultSaveModel} from "@common/types/faultData.types";
 import {find_all_switchPos} from "@render/api/switchPos";
 import {find_all_interval, find_by_interval_id} from "@render/api/interval";
 import {Filter, FilterOff, Focus2} from '@vicons/tabler'
-import {getDayString} from "@common/utils/dateUtils";
+import {getCNTimeString, getDayString} from "@common/utils/dateUtils";
 import {isEmpty} from "lodash";
 import {clipboard_write_text} from "@render/api/app/basic.api";
 
@@ -1029,7 +1040,7 @@ const intervalNameOptionsInit = async () => {
 
 // endregion
 
-// region
+// region 导出
 const showExportModalRef = ref(false)
 
 const exportModalFormRef = ref<FormInst | null>(null)
@@ -1039,8 +1050,12 @@ const exportModalFormModel = ref({
   proAct: null as string[],
   switchPos: null as string[],
   reclosingAct: null, // 重合闸动作
-  loadChange: null, // 负荷变化
-  powerLoadValue: null, // 负荷值
+
+  isLoadBeforeTripping: false,// 跳闸前负荷
+  loadBeforeTrippingValue: null,// 跳闸前负荷值
+
+  isLoadAfterTripping: false,// 跳闸后负荷
+  loadAfterTrippingValue: null,// 跳闸后负荷值
 })
 
 const exportModalFormRules = ref({
@@ -1073,15 +1088,25 @@ const exportModalFormRules = ref({
     trigger: ['change'],
     message: '请选择重合闸动作'
   },
-  loadChange: {
-    required: true,
-    trigger: ['change'],
-    message: '请选择负荷变化'
+  loadBeforeTrippingValue: {
+    validator(rule: FormItemRule, value: string) {
+      if (exportModalFormModel.value.isLoadBeforeTripping && isEmpty(value)) {
+        return new Error('跳闸前负荷不能为空')
+      } else {
+        return true
+      }
+    },
+    trigger: ['input', 'blur']
   },
-  powerLoadValue: {
-    required: true,
-    trigger: ['input'],
-    message: '请输入负荷值'
+  loadAfterTrippingValue: {
+    validator(rule: FormItemRule, value: string) {
+      if (exportModalFormModel.value.isLoadAfterTripping && isEmpty(value)) {
+        return new Error('跳闸后负荷不能为空')
+      } else {
+        return true
+      }
+    },
+    trigger: ['input', 'blur']
   },
 })
 
@@ -1105,16 +1130,6 @@ const exportModalReclosingActOptions = ref<Array<SelectOption | SelectGroupOptio
   {
     label: '重合闸未动作',
     value: '重合闸未动作'
-  }
-])
-const exportModalLoadChangeOptions = ref<Array<SelectOption | SelectGroupOption>>([
-  {
-    label: '跳闸前负荷',
-    value: '跳闸前负荷'
-  },
-  {
-    label: '跳闸后负荷',
-    value: '跳闸后负荷'
   }
 ])
 
@@ -1188,7 +1203,7 @@ const handleExportModalSave = async () => {
 
   exportModalFormRef.value?.validate(async errors => {
     if (!errors) {
-      summaryText.value = ''
+      summaryText.value = `酒泉集控站监控汇报：${getCNTimeString()}\n`
 
       for (const intervalId of exportModalFormModel.value.interval) {
         const interval = (await find_by_interval_id(parseInt(intervalId))).data
@@ -1226,7 +1241,21 @@ const handleExportModalSave = async () => {
           switchPosText = `${switchPosText.slice(0, -1)}，`
         }
 
-        summaryText.value += `${interval.substation.substationName}${interval.intervalName}，${proActText}${switchPosText}${exportModalFormModel.value.reclosingAct}，${exportModalFormModel.value.loadChange}P:${exportModalFormModel.value.powerLoadValue}MW。\n`
+        summaryText.value += `${interval.substation.substationName}${interval.intervalName}，` +
+            `${proActText}${switchPosText}${exportModalFormModel.value.reclosingAct}`
+
+        if (!exportModalFormModel.value.isLoadBeforeTripping && !exportModalFormModel.value.isLoadAfterTripping) {
+          summaryText.value += '。'
+        } else if (exportModalFormModel.value.isLoadBeforeTripping && !exportModalFormModel.value.isLoadAfterTripping) {
+          summaryText.value += `，跳闸前负荷P${exportModalFormModel.value.loadBeforeTrippingValue}MW。`
+        } else if (exportModalFormModel.value.isLoadAfterTripping && !exportModalFormModel.value.isLoadBeforeTripping) {
+          summaryText.value += `，跳闸后负荷P${exportModalFormModel.value.loadAfterTrippingValue}MW。`
+        } else if (exportModalFormModel.value.isLoadBeforeTripping && exportModalFormModel.value.isLoadAfterTripping) {
+          summaryText.value += `，跳闸前负荷P${exportModalFormModel.value.loadBeforeTrippingValue}MW` +
+              `，跳闸后负荷P${exportModalFormModel.value.loadAfterTrippingValue}MW。`
+        }
+
+        summaryText.value += `\n`
       }
 
       summaryText.value = summaryText.value.slice(0, -1)
@@ -1245,6 +1274,24 @@ const copyText = (text: string) => {
   clipboard_write_text(text).then(() => {
     window.$message.success('复制成功')
   })
+}
+
+const modelReset = () => {
+  exportModalFormModel.value = {
+    substation: null,
+    interval: null as string[],
+    proAct: null as string[],
+    switchPos: null as string[],
+    reclosingAct: null, // 重合闸动作
+
+    isLoadBeforeTripping: false,// 跳闸前负荷
+    loadBeforeTrippingValue: null,// 跳闸前负荷值
+
+    isLoadAfterTripping: false,// 跳闸后负荷
+    loadAfterTrippingValue: null,// 跳闸后负荷值
+  }
+
+  summaryText.value = ''
 }
 
 </script>
