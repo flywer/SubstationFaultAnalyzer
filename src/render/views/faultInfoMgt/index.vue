@@ -1209,10 +1209,10 @@ const handleExportModalSave = async () => {
         const interval = (await find_by_interval_id(parseInt(intervalId))).data
 
         let proActText = ''
+
         exportModalFormModel.value.proAct.forEach(proActId => {
           if (interval.proAct.map(p => p.id).includes(parseInt(proActId))) {
             const proAct = interval.proAct.find(p => p.id == parseInt(proActId))
-
             if (proAct.proActName.startsWith(interval.intervalName)) {
               proActText += proAct.proActName.substring(interval.intervalName.length) + '、'
             } else {
@@ -1241,24 +1241,25 @@ const handleExportModalSave = async () => {
           switchPosText = `${switchPosText.slice(0, -1)}，`
         }
 
-        summaryText.value += `${interval.substation.substationName}${interval.intervalName}，` +
-            `${proActText}${switchPosText}${exportModalFormModel.value.reclosingAct}`
-
-        if (!exportModalFormModel.value.isLoadBeforeTripping && !exportModalFormModel.value.isLoadAfterTripping) {
-          summaryText.value += '。'
-        } else if (exportModalFormModel.value.isLoadBeforeTripping && !exportModalFormModel.value.isLoadAfterTripping) {
-          summaryText.value += `，跳闸前负荷P:${exportModalFormModel.value.loadBeforeTrippingValue}MW。`
-        } else if (exportModalFormModel.value.isLoadAfterTripping && !exportModalFormModel.value.isLoadBeforeTripping) {
-          summaryText.value += `，跳闸后负荷P:${exportModalFormModel.value.loadAfterTrippingValue}MW。`
-        } else if (exportModalFormModel.value.isLoadBeforeTripping && exportModalFormModel.value.isLoadAfterTripping) {
-          summaryText.value += `，跳闸前负荷P:${exportModalFormModel.value.loadBeforeTrippingValue}MW` +
-              `，跳闸后负荷P:${exportModalFormModel.value.loadAfterTrippingValue}MW。`
+        if (summaryText.value.includes(interval.substation.substationName)) {
+          summaryText.value += `${interval.intervalName}${isEmpty(proActText) && isEmpty(switchPosText) ? '' : '，'}${proActText}${switchPosText}${exportModalFormModel.value.reclosingAct}；\n`
+        } else {
+          summaryText.value += `${interval.substation.substationName}${interval.intervalName}${isEmpty(proActText) && isEmpty(switchPosText) ? '' : '，'}${proActText}${switchPosText}${exportModalFormModel.value.reclosingAct}；\n`
         }
 
-        summaryText.value += `\n`
       }
 
-      summaryText.value = summaryText.value.slice(0, -1)
+      if (!exportModalFormModel.value.isLoadBeforeTripping && !exportModalFormModel.value.isLoadAfterTripping) {
+        summaryText.value = `${summaryText.value.slice(0, -2)}。`
+      } else if (exportModalFormModel.value.isLoadBeforeTripping && !exportModalFormModel.value.isLoadAfterTripping) {
+        summaryText.value += `跳闸前负荷P:${exportModalFormModel.value.loadBeforeTrippingValue}MW。`
+      } else if (exportModalFormModel.value.isLoadAfterTripping && !exportModalFormModel.value.isLoadBeforeTripping) {
+        summaryText.value += `跳闸后负荷P:${exportModalFormModel.value.loadAfterTrippingValue}MW。`
+      } else if (exportModalFormModel.value.isLoadBeforeTripping && exportModalFormModel.value.isLoadAfterTripping) {
+        summaryText.value += `跳闸前负荷P:${exportModalFormModel.value.loadBeforeTrippingValue}MW` +
+            `，跳闸后负荷P:${exportModalFormModel.value.loadAfterTrippingValue}MW。`
+      }
+
     }
   })
 
