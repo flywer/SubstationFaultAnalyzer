@@ -32,18 +32,7 @@ export const createMainWindow = (): BrowserWindow => {
 
     // 监听 "ready-to-show" 事件
     win.once('ready-to-show', async () => {
-        if (new Date() > new Date('2023-10-20 00:00:00')) {
-            await dialog.showMessageBox({
-                type: 'error',
-                title: '生命周期结束',
-                message: `应用生命周期已结束`,
-                buttons: ['ok']
-            }).then(() => {
-                app.exit()
-            })
-        } else {
-            win.show() // 当渲染器加载完毕时显示窗口
-        }
+        win.show() // 当渲染器加载完毕时显示窗口
     });
 
     if (isDev) {
