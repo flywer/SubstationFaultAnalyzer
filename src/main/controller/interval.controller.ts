@@ -6,7 +6,6 @@ import log from "electron-log";
 import {Interval} from "@main/entity/Interval";
 import {ProAct} from "@main/entity/ProAct";
 import {SwitchPos} from "@main/entity/SwitchPos";
-import {Substation} from "@main/entity/Substation";
 
 @Controller()
 export class IntervalController {
