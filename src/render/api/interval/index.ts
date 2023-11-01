@@ -13,7 +13,17 @@ export const find_all_interval = async (): Promise<Result<Interval[]>> => {
     return data
 }
 
-export const find_by_interval_name = async(name:string) => {
+export const find_by_interval_name = async (name: string) => {
     const {data} = await ipcInstance.send(channels.interval.findByIntervalName)
+    return data
+}
+
+export const delete_interval_by_id = async (id: number): Promise<Result<any>> => {
+    const {data} = await ipcInstance.send(channels.interval.deleteIntervalById, id)
+    return data
+}
+
+export const update_interval_name_by_id = async (id: number, name: string): Promise<Result<any>> => {
+    const {data} = await ipcInstance.send(channels.interval.updateNameById, id, name)
     return data
 }

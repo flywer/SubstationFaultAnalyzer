@@ -7,8 +7,8 @@ export const channels = reactive({
         updateSettings: "app/updateSettings",
         openDefaultBrowser: "app/openDefaultBrowser",
         relaunch: "app/relaunch",
-        clipboard:{
-            writeText:"app/clipboard/writeText",
+        clipboard: {
+            writeText: "app/clipboard/writeText",
         }
     },
     window: {
@@ -29,6 +29,9 @@ export const channels = reactive({
         findBySubstationName: 'substation/findBySubstationName',
         findByIntervalId: 'substation/findByIntervalId',
         findSubstationById: 'substation/findSubstationById',
+        deleteSubstationById: 'substation/deleteSubstationById',
+        findSubstationByName: 'substation/findSubstationByName',
+        updateNameById: 'substation/updateNameById',
     },
     proAct: {
         findAll: 'proAct/findAll',
@@ -42,6 +45,8 @@ export const channels = reactive({
         findByIntervalId: 'interval/findByIntervalId',
         findAllInterval: 'interval/findAllInterval',
         findByIntervalName: 'interval/findByIntervalName',
+        deleteIntervalById: 'interval/deleteIntervalById',
+        updateNameById: 'interval/updateNameById',
     }
 
 })

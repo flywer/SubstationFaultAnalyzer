@@ -106,6 +106,19 @@
             @focus="handleTreeFocus"
 
             :render-switcher-icon="renderSwitcherIcon"
+
+            :node-props="nodeProps"
+        />
+
+        <n-dropdown
+            trigger="manual"
+            placement="bottom-start"
+            :show="showDropdown"
+            :options="dropDownOptions"
+            :x="dropX"
+            :y="dropY"
+            @select="handleDropDownSelect"
+            @clickoutside="showDropdown = false"
         />
 
       </n-layout-sider>
@@ -267,6 +280,41 @@
       <n-button type="primary" :size="'small'" @click="handleModalSave" :loading="isModalSaving">保存
       </n-button>
       <n-button :size="'small'" @click="showEditModalRef=!showEditModalRef">返回</n-button>
+    </template>
+  </n-modal>
+
+
+  <n-modal
+      v-model:show="showTreeNodeEditModalRef"
+      :mask-closable="false"
+      :closable="true"
+      preset="dialog"
+      role="dialog"
+      :show-icon="false"
+      title="编辑"
+      :size="'small'"
+      style="width: 340px"
+  >
+    <n-form
+        class="mt-4"
+        ref="treeNodeEditModalFormRef"
+        :model="treeNodeEditModalModelRef"
+        :rules="treeNodeEditModalFormRules"
+        :size="'small'"
+    >
+      <n-grid :cols="10" :x-gap="4">
+        <n-form-item-gi :span="10" label="名称" path="name">
+          <n-input v-model:value="treeNodeEditModalModelRef.name"
+                   placeholder="请输入名称"
+                   clearable
+          />
+        </n-form-item-gi>
+      </n-grid>
+    </n-form>
+    <template #action>
+      <n-button type="primary" :size="'small'" @click="handleTreeNodeEditModalSave" :loading="isTreeNodeModalSaving">保存
+      </n-button>
+      <n-button :size="'small'" @click="showTreeNodeEditModalRef=!showTreeNodeEditModalRef">返回</n-button>
     </template>
   </n-modal>
 
@@ -438,7 +486,8 @@ import {
   TreeOption,
   SelectGroupOption,
   NPopconfirm,
-  FormItemRule
+  FormItemRule,
+  DropdownOption
 } from "naive-ui";
 import {Refresh, Search} from "@vicons/ionicons5";
 import {
@@ -452,11 +501,21 @@ import {
   Copy24Regular
 } from '@vicons/fluent'
 import {delete_fault_data, download_template, import_by_excel, save_fault_data} from "@render/api/faultData";
-import {find_all_substation, find_by_substation_name, find_substation_by_id} from "@render/api/substation";
+import {
+  delete_substation_by_id,
+  find_all_substation,
+  find_by_substation_name,
+  find_substation_by_id, find_substation_by_name, update_substation_name_by_id
+} from "@render/api/substation";
 import {find_all_proAct} from "@render/api/proAct";
 import {FaultDataTableRow, FaultSaveModel} from "@common/types/faultData.types";
 import {find_all_switchPos} from "@render/api/switchPos";
-import {find_all_interval, find_by_interval_id} from "@render/api/interval";
+import {
+  delete_interval_by_id,
+  find_all_interval,
+  find_by_interval_id,
+  update_interval_name_by_id
+} from "@render/api/interval";
 import {Filter, FilterOff, Focus2} from '@vicons/tabler'
 import {getCNTimeString, getDayString} from "@common/utils/dateUtils";
 import {isEmpty} from "lodash";
@@ -587,6 +646,179 @@ const renderSwitcherIcon = () => {
   return h(NIcon, null, {default: () => h(ChevronRight24Regular)})
 }
 
+const nodeProps = ({option}: { option: TreeOption }) => {
+  if (option.key != 'root') {
+    return {
+      onContextmenu(e: MouseEvent): void {
+        dropDownOptions.value = [
+          {label: '编辑', key: 'edit', treeKey: option.key},
+          {label: '删除', key: 'delete', treeKey: option.key}
+        ]
+        showDropdown.value = true
+        dropX.value = e.clientX
+        dropY.value = e.clientY
+        e.preventDefault()
+      }
+    }
+  }
+}
+
+
+// region 右键菜单
+const showDropdown = ref(false)
+const dropX = ref(0)
+const dropY = ref(0)
+const dropDownOptions = ref<DropdownOption[]>([])
+
+const handleDropDownSelect = (key: string, option: DropdownOption) => {
+  showDropdown.value = false
+  const treeOption = nTreeFindOptionByKey(treeNodes.value, option.treeKey)
+
+  if (key === 'edit') {
+    treeNodeEditModalInit(treeOption)
+  } else if (key === 'delete') {
+    window.$dialog.warning({
+      title: '警告',
+      content: `是否要删除[${treeOption.label}]以及其下所有数据？`,
+      positiveText: '确定',
+      negativeText: '取消',
+      onPositiveClick: () => {
+        const id = parseInt(option.treeKey.toString().split('-')[1])
+        if (option.treeKey.toString().startsWith('substation-')) {
+          delete_substation_by_id(id).then(res => {
+            if (res.success) {
+              window.$message.success(res.message)
+              selectedKeys.value = ['root']
+              expandedKeys.value = ['root']
+              treeNodesInit()
+              tableDataInit()
+            } else {
+              window.$notification.create({
+                title: "数据删除失败",
+                content: res.message,
+                type: "error"
+              })
+            }
+          })
+        } else if (option.treeKey.toString().startsWith('interval-')) {
+          delete_interval_by_id(id).then(res => {
+            if (res.success) {
+              window.$message.success(res.message)
+              selectedKeys.value = ['root']
+              expandedKeys.value = ['root']
+              treeNodesInit()
+              tableDataInit()
+            } else {
+              window.$notification.create({
+                title: "数据删除失败",
+                content: res.message,
+                type: "error"
+              })
+            }
+          })
+        }
+
+      }
+    });
+  }
+}
+
+const showTreeNodeEditModalRef = ref(false)
+const treeNodeEditModalFormRef = ref<FormInst | null>(null)
+const treeNodeEditModalModelRef = ref({
+  type: 1 | 2,
+  id: null,
+  name: null
+})
+const treeNodeEditModalFormRules = ref({
+  name: {
+    required: true,
+    trigger: ['input'],
+    asyncValidator(rule: FormItemRule, value: string) {
+      return new Promise<void>(async (resolve, reject) => {
+        if (treeNodeEditModalModelRef.value.type == 1) {
+          const substation = (await find_substation_by_name(value)).data
+          if (substation && substation.id != treeNodeEditModalModelRef.value.id) {
+            reject('变电站名称已存在')
+          } else {
+            resolve()
+          }
+        } else if (treeNodeEditModalModelRef.value.type == 2) {
+          const interval = (await find_by_interval_id(treeNodeEditModalModelRef.value.id)).data
+          const substation = (await find_substation_by_id(interval.substation.id)).data
+
+          if (substation.interval.some(interval => interval.intervalName === value && interval.id != treeNodeEditModalModelRef.value.id)) {
+            reject('间隔名称已存在')
+          } else {
+            resolve()
+          }
+        }
+      })
+    }
+  },
+})
+
+const isTreeNodeModalSaving = ref(false)
+
+const treeNodeEditModalInit = (treeOption: TreeOption) => {
+  if (treeOption.key.toString().startsWith('substation-')) {
+    treeNodeEditModalModelRef.value.type = 1
+  } else {
+    treeNodeEditModalModelRef.value.type = 2
+  }
+
+  treeNodeEditModalModelRef.value.id = parseInt(treeOption.key.toString().split('-')[1])
+  treeNodeEditModalModelRef.value.name = treeOption.label as string
+
+  showTreeNodeEditModalRef.value = true
+}
+
+const handleTreeNodeEditModalSave = () => {
+  treeNodeEditModalFormRef.value?.validate(errors => {
+    if (!errors) {
+      isTreeNodeModalSaving.value = true
+      if (treeNodeEditModalModelRef.value.type == 1) {
+        update_substation_name_by_id(treeNodeEditModalModelRef.value.id, treeNodeEditModalModelRef.value.name).then(res => {
+          if (res.success) {
+            window.$message.success(res.message)
+            treeNodesInit()
+            tableDataInit()
+          } else {
+            window.$notification.create({
+              title: "数据更新失败",
+              content: res.message,
+              type: "error"
+            })
+          }
+        }).finally(() => {
+          isTreeNodeModalSaving.value = false
+          showTreeNodeEditModalRef.value = false
+        })
+      } else {
+        update_interval_name_by_id(treeNodeEditModalModelRef.value.id, treeNodeEditModalModelRef.value.name).then(res => {
+          if (res.success) {
+            window.$message.success(res.message)
+            treeNodesInit()
+            tableDataInit()
+          } else {
+            window.$notification.create({
+              title: "数据更新失败",
+              content: res.message,
+              type: "error"
+            })
+          }
+        }).finally(() => {
+          isTreeNodeModalSaving.value = false
+          showTreeNodeEditModalRef.value = false
+        })
+      }
+    }
+  })
+}
+
+// endregion
+
+
 // endregion
 
 // region 右侧表格
@@ -617,7 +849,6 @@ const handleSearch = () => {
   setTimeout(() => {
     isTableLoading.value = false
   }, randomNumber(10, 300))
-
 }
 
 // 导入
@@ -1294,7 +1525,6 @@ const modelReset = () => {
 
   summaryText.value = ''
 }
-
 </script>
 
 <style scoped>
