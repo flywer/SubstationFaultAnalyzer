@@ -1,5 +1,5 @@
 import {join} from 'path'
-import {BrowserWindow, app, dialog} from 'electron'
+import {BrowserWindow, app} from 'electron'
 import log from 'electron-log'
 import {MAIN_WINDOW_URL} from '@main/window/constants'
 
